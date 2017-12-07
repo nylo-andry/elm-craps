@@ -1,4 +1,8 @@
 .app {
   display: flex;
   flex-direction: column;
+
+  .dice-image {
+    max-width: 112px;
+  }
 }

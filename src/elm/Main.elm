@@ -74,28 +74,25 @@ update msg model =
 
 updateModel : Model -> DiceFaces -> Model
 updateModel model diceFaces =
-    diceFaces
-        |> updateRoll model
-        |> updateTotal
-        |> updateGameStatus
+    let
+        total = calculateTotal diceFaces
+        phase = computePhase model.phase total
+    in
+        { model | total = total, phase = phase, roll = diceFaces }
+        
 
+computePhase : GamePhase -> Int -> GamePhase
+computePhase phase total =
+    case phase of
+        ComeOut ->
+            if (total == 7) || (total == 11)
+            then ComeOut
+            else Point total
+        Point point ->
+            if total == point
+            then ComeOut
+            else Point point
 
-updateRoll : Model -> DiceFaces -> Model
-updateRoll model diceFaces =
-    { model
-    | roll = diceFaces
-    }
-
-updateTotal : Model -> Model
-updateTotal model = 
-    { model
-    | total = calculateTotal model.roll
-    }
-
-
-updateGameStatus : Model -> Model
-updateGameStatus model =
-    model
 
 calculateTotal : DiceFaces -> Int
 calculateTotal diceFaces =
@@ -128,7 +125,8 @@ view model =
             Tuple.second model.roll
     in
         div [ class "app" ]
-            [ viewDice dice1
+            [ viewPhase model.phase
+            , viewDice dice1
             , viewDice dice2
             , span [] [ text ("Last Roll: " ++ (toString model.total)) ]
             , button [ onClick RollDice ] [ text "Roll!" ]
@@ -144,9 +142,19 @@ viewDice face =
         diceUrl =
             "assets/images/" ++ faceFile
     in
-        img [ src diceUrl ] []
+        img [ class "dice-image", src diceUrl ] []
 
 
+viewPhase : GamePhase -> Html Msg
+viewPhase phase =
+    let
+        phaseText = case phase of
+            ComeOut ->
+                "Come out Roll"
+            Point point ->
+                "Point: " ++ toString point
+    in
+        h2 [] [ text phaseText ]
 
 -- SUBSCRIPTIONS
 
